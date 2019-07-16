@@ -1,0 +1,45 @@
+name: brutechhome
+recipe: laravel
+stats:
+  - report: false
+config:
+  via: nginx
+  webroot: public
+  cache: redis
+  php: '7.3'
+  xdebug: false
+excludes:
+  - vendor
+  - node_modules
+services:
+  appserver:
+    type: php:7.3
+    run_as_root:
+      - docker-php-ext-install pcntl
+      - php /app/artisan horizon &
+      - php /app/artisan queue:work --sleep=3 --tries=3 --daemon &
+  database:
+    type: postgres
+    creds:
+      user: laravel
+      database: brutech
+    portforward: 5432
+  cache:
+    type: redis
+    portforward: 6379
+  node:
+    type: node:10
+    build:
+      - yarn
+    globals:
+      yarn: "latest"
+
+tooling:
+  redis-cli:
+    service: cache
+  yarn:
+    service: node
+  node:
+    service: node
+  npm:
+    service: node
